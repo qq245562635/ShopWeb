@@ -16,10 +16,7 @@
   <header class="topbar">
     <div class="wrap topbar-in">
       <a class="brand" href="./">
-        <svg class="brand-mark" viewBox="0 0 30 22" aria-hidden="true">
-          <path fill="currentColor" d="M3 0h24a3 3 0 0 1 3 3v4.5a3.5 3.5 0 0 0 0 7V19a3 3 0 0 1-3 3H3a3 3 0 0 1-3-3v-4.5a3.5 3.5 0 0 0 0-7V3a3 3 0 0 1 3-3z"/>
-          <path stroke="#fff" stroke-width="1.6" stroke-dasharray="2 2.4" d="M20 2.5v17"/>
-        </svg>
+        <span id="brandAvatar"></span>
         <span data-shop="name">小铺</span>
       </a>
       <label class="search">
@@ -35,13 +32,16 @@
   </header>
 
   <main>
-    <section class="wrap hero">
-      <div>
-        <h1 data-shop="name">小铺</h1>
-        <p class="tagline" data-shop="tagline"></p>
-        <div class="facts" id="facts"></div>
+    <section class="wrap profile">
+      <div class="cover" id="cover" aria-hidden="true"></div>
+      <div class="profile-card">
+        <span id="avatar"></span>
+        <div class="profile-text">
+          <h1 data-shop="name">小铺</h1>
+          <p class="tagline" data-shop="tagline"></p>
+          <div class="facts" id="facts"></div>
+        </div>
       </div>
-      <div class="fan" id="fan"></div>
     </section>
 
     <nav class="wrap tabs" id="tabs" aria-label="商品分类"></nav>
@@ -57,7 +57,7 @@
         <dl class="faq" id="faq"></dl>
       </div>
       <div class="box" id="contact" hidden>
-        <h2>联系客服</h2>
+        <h2>联系我</h2>
         <p class="box-lead">下单后把订单信息发到这里，核对到账就发货。</p>
         <div class="contact-list" id="contactList"></div>
       </div>
