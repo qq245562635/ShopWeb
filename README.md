@@ -15,27 +15,37 @@
 - 下单：生成订单号 → 展示收款码 → 一键复制订单信息发给你
 - 买家可以在「订单」里找回在这台设备上下过的单
 - 每个商品都能复制独立链接（`#item=商品id`），方便发到群里或朋友圈
+- 自带后台（`/admin/`），在网页上改店铺和商品，点发布就更新网站
 
-## 要改的地方
+## 后台
 
-所有内容都在 `assets/js/` 下的两个文件里，改完刷新页面即可：
+打开网站地址后面加 `/admin/`，例如 `https://qq245562635.github.io/ShopWeb/admin/`。
+
+在后台可以改：店铺信息（店名、头像、横幅、介绍、公告、在线时间、主题色、运费）、商品（图片、规格、价格、库存、类型、标签、站外链接）、分类、收款码、联系方式、购买须知。改完点右上角「发布」，改动和新上传的图片会作为一次提交保存到仓库，网站一两分钟后自动更新。
+
+**第一次登录需要一个 GitHub 令牌：**
+
+1. 打开 [GitHub 新建令牌页面](https://github.com/settings/personal-access-tokens/new)（Fine-grained token）
+2. Repository access 选 **Only select repositories**，选中这个仓库
+3. Permissions → Repository permissions → **Contents** 选 **Read and write**
+4. 生成后复制 `github_pat_` 开头的令牌，粘贴到后台登录页
+
+令牌只保存在你自己的浏览器里，只会发给 GitHub。后台页面虽然谁都能打开，但没有令牌什么也改不了。令牌过期后重新生成一个登录即可。
+
+上传的图片会自动压缩（商品图最长边 1400px），存到 `assets/img/uploads/`。
+
+**分支说明**：后台把改动保存到仓库的默认分支（`main`）。如果仓库里还有 `gh-pages` 分支，后台每次发布都会把它同步成和 `main` 一样。更省事的做法是在 Settings → Pages 把网站分支改成 `main`，然后删掉 `gh-pages`。
+
+## 数据文件
+
+后台改的就是这两个文件，也可以直接手改：
 
 | 文件 | 内容 |
 | --- | --- |
-| `config.js` | 店名、头像、横幅、介绍、公告、在线时间、主题色、运费、分类、收款码、联系方式、购买须知 |
-| `products.js` | 商品列表（文件开头有每个字段的说明） |
+| `data/shop.json` | 店铺设置：店名、头像、横幅、介绍、公告、在线时间、主题色、运费、分类、收款码、联系方式、购买须知 |
+| `data/products.json` | 商品列表 |
 
-**商品图片**：把图片放进 `assets/img/`（可以再建子文件夹），在商品里写 `images: ["assets/img/xxx-1.jpg", "assets/img/xxx-2.jpg"]`，第一张是封面。建议用正方形或 4:3 的图，单张压到 300KB 以内打开更快。
-
-**头像和横幅**：`config.js` 里的 `avatar` 和 `cover`。不填的话，头像用店名第一个字，横幅自动用商品图拼一条。
-
-**收款码**：把你的微信 / 支付宝收款码图片放进 `assets/img/`，然后在 `config.js` 的 `payments` 里改成对应文件名。只用一种收款方式就删掉另一项。
-
-**运费**：`config.js` 的 `shippingFee`，0 是包邮，填数字表示每单收一次（只有订单里有实物才收）。
-
-**站外购买**：某个商品已经在闲鱼、发卡平台等地方上架的话，给它加 `link: "https://..."`，按钮会直接跳转过去，不走本站下单。
-
-**颜色**：主题色在 `config.js` 的 `accent`；其它颜色和字体在 `assets/css/style.css` 开头的 `:root` 里。
+商品字段：`id`、`category`（分类 id）、`type`（`digital` 数字商品 / `physical` 实物 / `service` 服务）、`name`、`desc`、`details`（要点数组）、`images`（图片路径数组，第一张是封面）、`icon` 和 `color`（没有图片时的占位图标和底色）、`tags`、`price`、`was`（划线价）、`stock`（不写表示不限）、`options`（规格数组，每项 `{ name, price, was?, stock? }`）、`link`（站外购买链接）。
 
 ## 部署到 GitHub Pages
 
@@ -43,7 +53,7 @@
 2. Source 选 **Deploy from a branch**，Branch 选 `main`、目录 `/ (root)`，保存
 3. 等一两分钟，访问 `https://<你的用户名>.github.io/ShopWeb/`
 
-本地预览：在仓库目录运行 `python3 -m http.server`，打开 http://localhost:8000 。
+本地预览：在仓库目录运行 `python3 -m http.server`，打开 http://localhost:8000 （不能直接双击 index.html，浏览器会拦截读取数据文件）。
 
 ## 需要知道的限制
 
@@ -51,6 +61,6 @@
 
 - **不能自动确认收款**。买家扫码付款后，需要你在微信 / 支付宝里核对金额和备注里的订单号，再手动发货。
 - **订单不会传到你这里**，只保存在买家自己的浏览器里，所以下单页会引导买家「复制订单信息」发给你（里面包含收货地址）。
-- 库存是写死在 `products.js` 里的数字，卖掉后要自己改。
+- 库存不会自动扣减，卖掉后在后台改一下库存。
 
 以后想做自动收款、订单后台，需要接支付接口和后端；也可以先用 `link` 字段把部分商品导到现成平台。

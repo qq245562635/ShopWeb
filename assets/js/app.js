@@ -1,10 +1,29 @@
 /* ShopWeb 页面逻辑：分类、搜索、商品详情、购物车、下单。
-   一般不需要改这个文件，店铺内容在 config.js 和 products.js。 */
+   一般不需要改这个文件。店铺内容在 data/shop.json 和 data/products.json，
+   推荐用后台（/admin/）修改。 */
 (function () {
   "use strict";
 
-  var CFG = window.SHOP_CONFIG || {};
-  var PRODUCTS = (window.SHOP_PRODUCTS || []).filter(function (p) { return p && p.id; });
+  function loadJSON(url) {
+    return fetch(url, { cache: "no-cache" }).then(function (r) {
+      if (!r.ok) throw new Error(url + " " + r.status);
+      return r.json();
+    });
+  }
+
+  Promise.all([loadJSON("data/shop.json"), loadJSON("data/products.json")]).then(
+    function (res) { start(res[0] || {}, res[1] || []); },
+    function (err) {
+      var grid = document.getElementById("grid");
+      if (grid) {
+        grid.outerHTML = '<p class="empty">店铺数据没有加载出来。如果是直接双击打开的 index.html，请按 README 用本地服务器打开；线上出现这个提示请刷新重试。</p>';
+      }
+      if (window.console) console.error(err);
+    }
+  );
+
+  function start(CFG, PRODUCTS) {
+  PRODUCTS = PRODUCTS.filter(function (p) { return p && p.id; });
   var CUR = CFG.currency || "¥";
   var CATS = CFG.categories || [];
   var PAYS = CFG.payments || [];
@@ -877,4 +896,5 @@
   renderGrid();
   updateBadge(false);
   openFromHash();
+  }
 })();
