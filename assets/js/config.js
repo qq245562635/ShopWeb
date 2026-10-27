@@ -25,12 +25,15 @@ window.SHOP_CONFIG = {
   // 订单号前缀，可留空
   orderPrefix: "",
 
-  // 商品分类：id 要和 products.js 里商品的 category 对应；paper 是这一类商品券的票面颜色
-  // 想再加分类可以用这些颜色：#F8C7B5（橘粉）、#D8D0F5（淡紫）、#BFE0F2（浅蓝）
+  // 商品分类：id 要和 products.js 里商品的 category 对应
+  // style: "coupon" 的分类，卡面会画成带撕口的券；不写就是普通圆角卡
   categories: [
-    { id: "virtual", name: "虚拟物品", paper: "#C9EBD9" },
-    { id: "card", name: "卡券", paper: "#F7E59A" }
+    { id: "virtual", name: "虚拟物品" },
+    { id: "card", name: "卡券", style: "coupon" }
   ],
+
+  // 首屏展开的三张卡（填商品 id）。不写就自动取前三个有货的商品
+  featured: ["vip-pass", "gift-card", "pixel-ui-kit"],
 
   // 收款方式：把 qr 换成你自己的收款码图片（放进 assets/img/ 再改文件名）
   payments: [

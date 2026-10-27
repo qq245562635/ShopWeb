@@ -11,6 +11,8 @@
   <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body>
+  <p class="notice" id="notice" hidden></p>
+
   <header class="topbar">
     <div class="wrap topbar-in">
       <a class="brand" href="./">
@@ -33,21 +35,13 @@
   </header>
 
   <main>
-    <section class="hero">
-      <div class="wrap">
-        <div class="pass">
-          <div class="pass-main">
-            <h1 class="pass-title" data-shop="name">小铺</h1>
-            <p class="pass-tagline" data-shop="tagline"></p>
-            <p class="pass-notice" id="notice" hidden></p>
-          </div>
-          <div class="pass-stub" id="stub">
-            <span class="status" id="status"><i class="dot"></i><span id="statusText">客服在线</span></span>
-            <span class="pass-hours num" id="hours"></span>
-            <span class="pass-sub" id="delivery"></span>
-          </div>
-        </div>
+    <section class="wrap hero">
+      <div>
+        <h1 data-shop="name">小铺</h1>
+        <p class="tagline" data-shop="tagline"></p>
+        <div class="facts" id="facts"></div>
       </div>
+      <div class="fan" id="fan"></div>
     </section>
 
     <nav class="wrap tabs" id="tabs" aria-label="商品分类"></nav>
@@ -57,17 +51,20 @@
       <p class="empty" id="empty" hidden></p>
     </section>
 
-    <section class="wrap notes" id="notes" hidden>
-      <h2>购买须知</h2>
-      <dl class="faq" id="faq"></dl>
+    <section class="wrap info" id="info">
+      <div class="box" id="notes" hidden>
+        <h2>购买须知</h2>
+        <dl class="faq" id="faq"></dl>
+      </div>
+      <div class="box" id="contact" hidden>
+        <h2>联系客服</h2>
+        <p class="box-lead">下单后把订单信息发到这里，核对到账就发货。</p>
+        <div class="contact-list" id="contactList"></div>
+      </div>
     </section>
   </main>
 
-  <footer class="wrap contact" id="contact">
-    <h2>联系客服</h2>
-    <div class="contact-list" id="contactList"></div>
-    <p class="foot-line" id="footLine"></p>
-  </footer>
+  <footer class="wrap foot-line" id="footLine"></footer>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 

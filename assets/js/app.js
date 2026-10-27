@@ -60,15 +60,66 @@
     copy: '<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M15 9V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h4"/>',
     megaphone: '<path d="M3 10v4l11 5V5zM14 9h2.5a3 3 0 0 1 0 6H14M6 15.5l1.2 4.5H10l-1-4"/>',
     bag: '<path d="M5 8h14l-1 12H6z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/>',
-    receipt: '<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/>'
+    receipt: '<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/>',
+    plus: '<path d="M12 5v14M5 12h14"/>'
   };
 
   function icon(name) {
     return '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true">' + (ICONS[name] || ICONS.ticket) + "</svg>";
   }
 
-  function art(p) {
-    return '<span class="art">' + (p.image ? '<img src="' + esc(p.image) + '" alt="" loading="lazy">' : icon(p.icon)) + "</span>";
+  /* 卡面配色：products.js 里用 theme 指定，不写就按商品 id 自动分配 */
+  var THEMES = {
+    violet: ["#4b2fd6", "#9a7bff"],
+    coral: ["#e2434b", "#ff9a62"],
+    teal: ["#0b7f80", "#2fcfae"],
+    midnight: ["#1a2040", "#4b5ca8"],
+    gold: ["#a65f00", "#efb43a"],
+    rose: ["#c2266f", "#ff7eb3"],
+    forest: ["#17703d", "#76c46a"],
+    ocean: ["#1356b8", "#4cc0f2"],
+    graphite: ["#24262d", "#636878"]
+  };
+  var THEME_KEYS = Object.keys(THEMES);
+
+  function themeOf(p) {
+    if (THEMES[p.theme]) return THEMES[p.theme];
+    var h = 0;
+    for (var i = 0; i < p.id.length; i++) h = (h * 31 + p.id.charCodeAt(i)) >>> 0;
+    return THEMES[THEME_KEYS[h % THEME_KEYS.length]];
+  }
+
+  function rgba(hex, a) {
+    var n = parseInt(hex.slice(1), 16);
+    return "rgba(" + (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255) + "," + a + ")";
+  }
+
+  function themeVars(p) {
+    var t = themeOf(p);
+    return "--c1:" + t[0] + ";--c2:" + t[1] + ";--sh:" + rgba(t[0], 0.38) + ";--tint:" + rgba(t[1], 0.14);
+  }
+
+  var BRAND_SVG = '<svg viewBox="0 0 30 22" aria-hidden="true"><path fill="currentColor" d="M3 0h24a3 3 0 0 1 3 3v4.5a3.5 3.5 0 0 0 0 7V19a3 3 0 0 1-3 3H3a3 3 0 0 1-3-3v-4.5a3.5 3.5 0 0 0 0-7V3a3 3 0 0 1 3-3z" opacity=".9"/></svg>';
+
+  // 卡面：卡券类是带撕口的券，其它是圆角卡
+  function faceHTML(p, o) {
+    o = o || {};
+    var coupon = (catById[p.category] || {}).style === "coupon";
+    var cls = "face" + (coupon ? " face--coupon" : "") + (o.mini ? " face--mini" : "") + (p.image ? " face--img" : "");
+    var bg = p.image ? ' style="background-image:linear-gradient(20deg,rgba(0,0,0,.35),rgba(0,0,0,0)),url(\'' + esc(p.image) + '\')"' : "";
+    var tag = !o.mini && p.tags && p.tags.length ? '<span class="face-tag">' + esc(p.tags[0]) + "</span>" : "";
+    var face = '<span class="' + cls + '"' + bg + ">" +
+      (coupon ? '<span class="face-perf"></span>' : "") +
+      '<span class="face-brand">' + BRAND_SVG + esc(CFG.name || "") + "</span>" + tag +
+      (p.image ? "" : '<span class="face-glyph">' + icon(p.icon) + "</span>") +
+      '<span class="face-title">' + esc(p.name) + (o.sub ? '<span class="face-sub" data-face-sub>' + esc(o.sub) + "</span>" : "") + "</span>" +
+      (o.out ? '<span class="face-out">已售罄</span>' : "") +
+      "</span>";
+    return o.mini ? face : '<span class="face-wrap" style="' + themeVars(p) + '">' + face + "</span>";
+  }
+
+  function miniFace(p) {
+    return '<span class="face-wrap" style="' + themeVars(p) + ';filter:none">' + faceHTML(p, { mini: true }) + "</span>";
   }
 
   var toastTimer;
@@ -132,8 +183,6 @@
     return { min: min, from: Math.max.apply(null, list) > min };
   }
 
-  function paperOf(p) { return p.paper || (catById[p.category] || {}).paper || "#e6ecf0"; }
-
   function optName(p, oi) { var o = opt(p, oi); return o ? o.name : ""; }
 
   /* ---------- 购物车 ---------- */
@@ -155,9 +204,17 @@
     var p = prodById[pid];
     var max = maxQty(p, oi);
     var line = cart.filter(function (l) { return l.pid === pid && l.oi === oi; })[0];
-    if (line) line.qty = Math.min(max, line.qty + qty);
-    else cart.push({ pid: pid, oi: oi, qty: Math.min(max, qty) });
+    var before = line ? line.qty : 0;
+    var after = Math.min(max, before + qty);
+    if (after === before) return false;
+    if (line) line.qty = after;
+    else cart.push({ pid: pid, oi: oi, qty: after });
     saveCart();
+    return true;
+  }
+
+  function addAndTell(pid, oi, qty) {
+    toast(addToCart(pid, oi, qty) ? "已加入购物车" : "购物车里已经是库存上限了");
   }
 
   function updateBadge(bump) {
@@ -263,22 +320,21 @@
     });
 
     if (CFG.notice) {
-      var nt = $("#notice");
-      nt.innerHTML = icon("megaphone") + "<span>" + esc(CFG.notice) + "</span>";
-      nt.hidden = false;
+      $("#notice").textContent = CFG.notice;
+      $("#notice").hidden = false;
     }
 
     var open = shopIsOpen();
-    if (open === null) {
-      $("#status").hidden = true;
-      $("#hours").hidden = true;
-    } else {
-      $("#status").classList.toggle("is-closed", !open);
-      $("#statusText").textContent = open ? "客服在线" : "客服休息中";
-      $("#hours").textContent = CFG.hours.open + " – " + CFG.hours.close;
+    var facts = [];
+    if (open !== null) {
+      facts.push('<span class="fact' + (open ? "" : " is-closed") + '"><i class="dot"></i><b>' + (open ? "客服在线" : "客服休息中") + '</b><span class="num">' +
+        esc(CFG.hours.open) + "–" + esc(CFG.hours.close) + "</span></span>");
     }
-    $("#delivery").textContent = open === false ? "现在下单，上线后按顺序发货" : (CFG.delivery || "");
-    if (open === null && !CFG.delivery) $("#stub").hidden = true;
+    var delivery = open === false ? "现在下单，上线后按顺序发货" : CFG.delivery;
+    if (delivery) facts.push('<span class="fact">' + esc(delivery) + "</span>");
+    $("#facts").innerHTML = facts.join("");
+
+    renderFan();
 
     var notes = CFG.notes || [];
     if (notes.length) {
@@ -288,9 +344,23 @@
       $("#notes").hidden = false;
     }
 
-    $("#contactList").innerHTML = contactsHTML();
-    if (!(CFG.contacts || []).length) $("#contact").querySelector("h2").hidden = true;
+    if ((CFG.contacts || []).length) {
+      $("#contactList").innerHTML = contactsHTML();
+      $("#contact").hidden = false;
+    }
+    if ($("#notes").hidden && $("#contact").hidden) $("#info").hidden = true;
     $("#footLine").textContent = "© " + new Date().getFullYear() + " " + name;
+  }
+
+  // 首屏扇形展开的三张卡：config.featured 指定，不写就取前三个有货的商品
+  function renderFan() {
+    var ids = CFG.featured && CFG.featured.length ? CFG.featured : PRODUCTS.filter(function (p) { return !soldOut(p); }).map(function (p) { return p.id; });
+    var picks = ids.map(function (id) { return prodById[id]; }).filter(Boolean).slice(0, 3);
+    var fan = $("#fan");
+    if (!picks.length) { fan.hidden = true; return; }
+    fan.innerHTML = picks.map(function (p) {
+      return '<button class="fan-card" type="button" data-pid="' + esc(p.id) + '" aria-label="查看 ' + esc(p.name) + '">' + faceHTML(p) + "</button>";
+    }).join("");
   }
 
   function contactsHTML() {
@@ -307,29 +377,27 @@
     var counts = {};
     PRODUCTS.forEach(function (p) { counts[p.category] = (counts[p.category] || 0) + 1; });
     var tabs = [{ id: "all", name: "全部", n: PRODUCTS.length }].concat(
-      CATS.filter(function (c) { return counts[c.id]; }).map(function (c) { return { id: c.id, name: c.name, n: counts[c.id], paper: c.paper }; })
+      CATS.filter(function (c) { return counts[c.id]; }).map(function (c) { return { id: c.id, name: c.name, n: counts[c.id] }; })
     );
     $("#tabs").innerHTML = tabs.map(function (t) {
       return '<button class="tab" type="button" data-cat="' + esc(t.id) + '" aria-pressed="' + (state.cat === t.id) + '">' +
-        (t.paper ? '<i class="tab-swatch" style="--paper:' + esc(t.paper) + '"></i>' : "") +
         esc(t.name) + ' <span class="tab-n">' + t.n + "</span></button>";
     }).join("");
   }
 
-  function ticketHTML(p) {
+  function itemHTML(p) {
     var out = soldOut(p);
     var r = priceRange(p);
     var was = opts(p) ? null : wasOf(p);
-    var tags = (p.tags || []).length ? '<span class="tags">' + p.tags.map(function (t) { return '<span class="tag">' + esc(t) + "</span>"; }).join("") + "</span>" : "";
-    return '<button class="ticket' + (out ? " is-out" : "") + '" type="button" data-pid="' + esc(p.id) + '" style="--paper:' + esc(paperOf(p)) + '">' +
-      '<span class="ticket-main">' + art(p) +
-        '<span class="ticket-text"><span class="ticket-name">' + esc(p.name) + "</span>" +
-        (p.desc ? '<span class="ticket-desc">' + esc(p.desc) + "</span>" : "") + tags + "</span></span>" +
-      '<span class="ticket-stub"><span class="price">' + priceHTML(r.min, r.from) + "</span>" +
+    return '<article class="item' + (out ? " is-out" : "") + '">' +
+      '<button class="item-hit" type="button" data-pid="' + esc(p.id) + '" aria-label="' + esc(p.name) + "，" + esc(CUR) + money(r.min) + (r.from ? "起" : "") + (out ? "，已售罄" : "") + '">' +
+        faceHTML(p, { out: out }) + "</button>" +
+      '<div class="item-meta"><div class="item-row"><span class="price">' + priceHTML(r.min, r.from) + "</span>" +
         (was ? '<s class="was">' + esc(CUR) + money(was) + "</s>" : "") +
-        '<span class="stub-cta">' + (out ? "已售罄" : "选购") + "</span></span>" +
-      (out ? '<span class="stamp" aria-hidden="true">售罄</span>' : "") +
-      "</button>";
+        '<button class="add" type="button" data-quick="' + esc(p.id) + '"' + (out ? " disabled" : "") +
+          ' aria-label="' + (opts(p) ? "选择规格：" : "加入购物车：") + esc(p.name) + '">' + icon("plus") + "</button></div>" +
+        (p.desc ? '<p class="item-desc">' + esc(p.desc) + "</p>" : "") +
+      "</div></article>";
   }
 
   function renderGrid() {
@@ -340,7 +408,7 @@
       var hay = [p.name, p.desc, (p.tags || []).join(" "), (opts(p) || []).map(function (o) { return o.name; }).join(" ")].join(" ").toLowerCase();
       return hay.indexOf(q) !== -1;
     });
-    $("#grid").innerHTML = list.map(ticketHTML).join("");
+    $("#grid").innerHTML = list.map(itemHTML).join("");
     var empty = $("#empty");
     empty.hidden = list.length > 0;
     if (!list.length) {
@@ -364,8 +432,8 @@
     var uid = "q" + Date.now();
 
     var body =
-      '<div class="p-card" style="--paper:' + esc(paperOf(p)) + '">' + art(p) +
-        '<div><h3 class="p-name">' + esc(p.name) + "</h3>" + (p.desc ? '<p class="p-desc">' + esc(p.desc) + "</p>" : "") + "</div></div>" +
+      '<div class="p-stage" style="' + themeVars(p) + '">' + faceHTML(p, { sub: o ? o[oi].name : "", out: soldOut(p) }) + "</div>" +
+      '<h3 class="p-name">' + esc(p.name) + "</h3>" + (p.desc ? '<p class="p-desc">' + esc(p.desc) + "</p>" : "") +
       '<div class="p-price"><span class="price" data-price></span><s class="was" data-was></s><span class="p-stock" data-stock></span></div>' +
       (o ? '<fieldset class="field"><legend>规格</legend><div class="chips">' + o.map(function (x, i) {
         var none = stockOf(p, i) <= 0;
@@ -390,6 +458,8 @@
       var max = maxQty(p, oi);
       qty = Math.max(1, Math.min(qty, max || 1));
       $("[data-price]", panel).innerHTML = priceHTML(priceOf(p, oi));
+      var sub = $("[data-face-sub]", panel);
+      if (sub) sub.textContent = optName(p, oi);
       var w = wasOf(p, oi);
       var wasEl = $("[data-was]", panel);
       wasEl.textContent = w ? CUR + money(w) : "";
@@ -415,8 +485,7 @@
         sync();
         $("[data-stepper] [data-step='" + t.getAttribute("data-step") + "']", panel).focus();
       } else if (t.hasAttribute("data-add")) {
-        addToCart(p.id, oi, qty);
-        toast("已加入购物车");
+        addAndTell(p.id, oi, qty);
         L.close();
       } else if (t.hasAttribute("data-buy")) {
         openCheckout([{ pid: p.id, oi: oi, qty: qty }], false);
@@ -450,7 +519,7 @@
       footEl.hidden = false;
       bodyEl.innerHTML = '<ul class="lines">' + cart.map(function (l, i) {
         var p = prodById[l.pid];
-        return '<li class="line" data-i="' + i + '" style="--paper:' + esc(paperOf(p)) + '">' + art(p) +
+        return '<li class="line" data-i="' + i + '">' + miniFace(p) +
           '<div class="line-info"><span class="line-name">' + esc(p.name) + "</span>" +
           (l.oi != null ? '<span class="line-opt">' + esc(optName(p, l.oi)) + "</span>" : "") +
           '<div class="line-ctrl"><span class="line-price">' + esc(CUR) + money(priceOf(p, l.oi)) + "</span>" +
@@ -685,6 +754,18 @@
   });
 
   $("#grid").addEventListener("click", function (e) {
+    var q = e.target.closest("[data-quick]");
+    if (q) {
+      var p = prodById[q.getAttribute("data-quick")];
+      if (opts(p) || p.link) openProduct(p.id);
+      else addAndTell(p.id, null, 1);
+      return;
+    }
+    var t = e.target.closest("[data-pid]");
+    if (t) openProduct(t.getAttribute("data-pid"));
+  });
+
+  $("#fan").addEventListener("click", function (e) {
     var t = e.target.closest("[data-pid]");
     if (t) openProduct(t.getAttribute("data-pid"));
   });
