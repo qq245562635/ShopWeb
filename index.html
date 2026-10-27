@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#d8e1e6">
+  <meta name="format-detection" content="telephone=no">
+  <title>小铺</title>
+  <meta name="description" content="">
+  <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="wrap topbar-in">
+      <a class="brand" href="./">
+        <svg class="brand-mark" viewBox="0 0 30 22" aria-hidden="true">
+          <path fill="currentColor" d="M3 0h24a3 3 0 0 1 3 3v4.5a3.5 3.5 0 0 0 0 7V19a3 3 0 0 1-3 3H3a3 3 0 0 1-3-3v-4.5a3.5 3.5 0 0 0 0-7V3a3 3 0 0 1 3-3z"/>
+          <path stroke="#fff" stroke-width="1.6" stroke-dasharray="2 2.4" d="M20 2.5v17"/>
+        </svg>
+        <span data-shop="name">小铺</span>
+      </a>
+      <label class="search">
+        <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+        <span class="sr-only">搜索商品</span>
+        <input id="q" type="search" placeholder="搜索商品" autocomplete="off" enterkeyhint="search">
+      </label>
+      <button class="bar-btn" id="openOrders" type="button">订单</button>
+      <button class="bar-btn bar-btn--cart" id="openCart" type="button">
+        购物车 <span class="badge" id="cartCount">0</span>
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="wrap">
+        <div class="pass">
+          <div class="pass-main">
+            <h1 class="pass-title" data-shop="name">小铺</h1>
+            <p class="pass-tagline" data-shop="tagline"></p>
+            <p class="pass-notice" id="notice" hidden></p>
+          </div>
+          <div class="pass-stub" id="stub">
+            <span class="status" id="status"><i class="dot"></i><span id="statusText">客服在线</span></span>
+            <span class="pass-hours num" id="hours"></span>
+            <span class="pass-sub" id="delivery"></span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <nav class="wrap tabs" id="tabs" aria-label="商品分类"></nav>
+
+    <section class="wrap shelf" aria-label="商品列表">
+      <div class="grid" id="grid"></div>
+      <p class="empty" id="empty" hidden></p>
+    </section>
+
+    <section class="wrap notes" id="notes" hidden>
+      <h2>购买须知</h2>
+      <dl class="faq" id="faq"></dl>
+    </section>
+  </main>
+
+  <footer class="wrap contact" id="contact">
+    <h2>联系客服</h2>
+    <div class="contact-list" id="contactList"></div>
+    <p class="foot-line" id="footLine"></p>
+  </footer>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/products.js"></script>
+  <script src="assets/js/app.js"></script>
+</body>
+</html>
